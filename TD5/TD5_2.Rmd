@@ -1,0 +1,96 @@
+---
+title: "Data Manipulation with dplyr"
+author: "Lucas Mello Schnorr, Jean-Marc Vincent"
+date: "February 28, 2017"
+output: pdf_document
+---
+
+```{r setup, include=FALSE}
+knitr::opts_chunk$set(echo = TRUE)
+```
+
+This is a demonstration of how dplyr works.
+
+First, we need some data.
+
+```{r}
+library(readr);
+df <- read_tsv (file = "dpt2015.txt",
+                locale = locale(encoding = "ISO-8859-1"));
+head(df);
+```
+
+Load the necessary packages:
+
+```{r}
+library(dplyr);
+library(magrittr);
+```
+
+
+
+Now, let's use the _filter()_ verb :
+On filtre les lignes dont l'année de naissance n'est pas renseignée (XXXX):
+
+```{r}
+df %>% filter(annais != 'XXXX');
+```
+On va afficher le nombre d'occurences de nos noms à chacun :
+
+Marie :
+
+```{r}
+df %>% filter(preusuel=='MARIE')%>% summarise(N=sum(nombre));
+```
+
+
+Kathleen :
+
+```{r}
+df %>% filter(preusuel=='KATHLEEN')%>% summarise(N=sum(nombre));
+```
+
+Lucas :
+
+```{r}
+df %>% filter(preusuel=='LUCAS')%>% summarise(N=sum(nombre));
+```
+
+On va voir l'étendue des donnée en terme d'années.
+Tout d'abord on va transformer l'année de naissance en nombre.
+```{r}
+df %>% filter(annais!='XXXX') %>% mutate(annaisbis=as.integer(annais));
+
+```
+
+```{r}
+df %>% filter(annais!='XXXX') %>% mutate(annaisbis=as.integer(annais)) %>% summarise(N=min(annais));
+```
+```{r}
+df %>% filter(annais!='XXXX') %>% mutate(annaisbis=as.integer(annais)) %>% summarise(N=max(annais));
+```
+Les données vont de 1900 à 2015.
+
+
+On va regarder le prénom le plus représenté, hommes et femmes confondus.
+```{r}
+df %>% filter(annais!='XXXX') %>% group_by(preusuel)%>%summarise(N=sum(nombre))%>%filter(N==max(N))
+```
+Marie est donc le prénom le plus représenté.
+
+On va regarder le prénom le plus représenté pour les hommes.
+```{r}
+df %>% filter(annais!='XXXX') %>% filter(sexe==1)%>% group_by(preusuel)%>%summarise(N=sum(nombre))%>%filter(N==max(N))
+```
+Jean est le prénom le plus représenté chez les hommes.
+
+On chercher les prénoms qui n'ont qui n'ont que le minimum d'occurences.
+```{r}
+df %>% filter(annais!='XXXX') %>% group_by(preusuel)%>%summarise(N=sum(nombre))%>%filter(N==min(N))
+```
+Voici la liste des prénoms les moins représentés (beaucoup).
+```{r}
+library(ggplot2);
+df %>% mutate(annais=as.integer(annais)) %>%filter(annais!='XXXX') %>%filter(preusuel=='MARIE') %>% group_by(annais)%>%summarise(N=sum(nombre)) %>%ggplot(aes(y=N,x=annais))+geom_point()
+```
+On peut voir qu'il y a de moins en moins de Marie.

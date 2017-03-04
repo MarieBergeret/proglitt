@@ -1,0 +1,57 @@
+---
+title: "TD4_2"
+output: html_document
+---
+
+```{r setup, include=FALSE}
+knitr::opts_chunk$set(echo = TRUE)
+```
+Nous avons choisi les données contenues dans le fichier lynx.csv. Ce fichier contient le nombre de lynx par année. Nous possédons les données de 1921 et jusqu'à 1934.
+Le fichier de données contient 3 variables : un identifiant, l'année et le nombre de lynx.
+```{r}
+df <- read.csv("data/lynx.csv", header=TRUE)
+head(df);
+tail(df)
+```
+
+```{r}
+library(ggplot2);
+```
+
+Nous allons placer pour chaque année, le nombre de lynx. Nous allons ensuite relier ces points entre eux. Nous obtiendrons donc une courbe d'évolution.
+```{r}
+ggplot(data=df, aes(x=time, y=lynx)) + geom_point() + geom_line();
+```
+
+
+Avant d'interpréter ce graphique nous allons renommer les axes.
+
+```{r}
+ggplot(data=df, aes(x=time, y=lynx)) +
+    geom_point() +
+    geom_line() +
+    xlab("Temps (année)") +
+    ylab("Nombre de lynx");
+```
+
+Ce graphique représente l'évolution du nombre de lynx au fil des ans. On peut voir que ce nombre fluctue énormément avec trois pics majeurs : 1830, 1905, et 1965.
+
+```{r}
+str(df);
+```
+
+
+Nous allons mantenant réaliser un histogramme.
+```{r}
+ggplot(data=df) +
+  geom_histogram(aes(x=lynx));
+```
+Sur le total des années on n'observe qu'il y a très souvent peu de lynx (moins de 1000).
+
+
+Nous réalisons ensuite un boxplot.
+```{r, fig.width=3, fig.height=5}
+ggplot(df, aes(x=1, y=lynx)) + geom_boxplot() + geom_point(y=mean(df$lynx));
+```
+On peut voir que le nombre maximum de lynx est élevé (5000 par an). Sur toutes ces années que la moyenne du nombre de lynx est de 500, ce qui est très faible.
+

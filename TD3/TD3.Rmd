@@ -54,7 +54,7 @@ The `set.seed` call is here only to keep the synthetic analysis fully reproducib
 To read the synthetic ping-pong measurements, the code below reads the file `pp-synthetic.csv` and creates the data frame `df`. This data frame has a single column called `time` which contains all measurements that have been previously generated.  The call to `head(df)` lists the first rows of the data frame.
 
 ```{r}
-df <- read.csv("pp-synthetic.csv", header=TRUE, col.names=c("time"))
+df <- read.csv("data/PP_size_1.csv", header=TRUE, col.names=c("time"))
 head(df);
 ```
 
@@ -69,6 +69,7 @@ The best way to get an overview is to plot the data (see below). Unaware of the 
 plot(df$time, ylab="Time (seconds)", xlab="Measurement Number");
 ```
 
+La plupart des mesures se trouvent en dessous de 0,00005. Certaines fois le temps peut être jusqu'à 5 fois plus lent.
 
 
 ## Statistical Summary
@@ -78,7 +79,9 @@ A summary of a set of values can be easily obtained in R with (`df$time` is a ve
 ```{r}
 summary(df$time);
 ```
-We can see that the mean estimation is `3.946`, while the median gives `3.849`. Other values are the minimum, the first quartile, the third quartile and the maximum number.
+We can see that the mean estimation is `4.732e-5`, while the median gives `3.164e-5`. Other values are the minimum, the first quartile, the third quartile and the maximum number.
+
+Les valeurs sont très faibles, de l'ordre de 10^-5.
 
 ## Boxplot
 
@@ -95,6 +98,8 @@ A histogram counts how many times the observed value falls into different bins. 
 hist(df$time, breaks=7, xlab="Time (seconds)", main="Histogram of Ping-Pong")
 ```
 The problem of histograms is that by changing the number of bins, the perception based on the plot can radically change. Let's for instance force the number of bins to 2:
+
+Cet histogramme confirme ce que nous avons remarqué lors de la création du premier plot : la majorité des valeurs se situent entre 0 et 0,00005s. Plus la durée du ping pong augmente moins il y a de valeurs.
 
 ```{r, fig.width=3}
 hist(df$time, breaks=2, xlab="Time (seconds)", main="Histogram of Ping-Pong")
@@ -122,7 +127,7 @@ Which are slightly different from the true values.
 The measurements detailed in the introduction have been obtained for a number of different message sizes. We provide five of them here, with the following names:
 
 ```{bash}
-ls data/PP_size*.csv
+ls data/PP_size_3.csv
 ```
 
 From 1 to 5 bytes. You should repeat all the steps of previous section using at least one of these files. Write your stastitical interpretation of the measurements. Here's how you can read one of them.
