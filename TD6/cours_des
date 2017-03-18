@@ -1,0 +1,27 @@
+Problème : décision à prendre en milieu incertain
+
+connaissance à travers des observations -> inférer pour prendre une décision
+=> construire un modèle (représentation abstraite de la réalité)
+
+Réalité :
+Expériences -> observations
+(x1,...,xn) valeurs numériques
+
+Modèle :
+espace de probabilité (x1,...,xn) variables aléatoires
+loi d'une variable aléatoire P(X=x)
+Hypothèses : les variables aléatoires sont indépendantes de même loi. Physiquement, les expériences sont indépendantes (causalité) et indifférentiables
+
+ex : Duc de Toscane
+	Résultat du jet de 3 dés.
+	Si =9 alors 1
+	sinon 0
+n = taille de l'échantillon
+
+Loi des grands nombres :
+Var Xi<+infini
+1/n(x1,...,xn)->P9 (quand n tend vers l'infini, interprété comme une variable aléatoire qui vaut toujours P9)
+
+Une statistique yn est une fonction des observations. Si le modèle est correct yn est une réalisation d'une variable aléatoire Yn.
+
+NB: loi normale -> la 'cloche'

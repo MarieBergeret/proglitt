@@ -1,0 +1,93 @@
+
+```{r}
+dice <- function(faces = 6, n = 100)
+{
+  sample(x=seq(from = 1, to = faces, by = 1), size=n,
+  replace=TRUE);
+}
+dice(6,400)
+```
+
+
+```{r}
+experiment <- function(faces = 6,n=100){
+  
+dice1<-dice(faces,n);
+dice2<-dice(faces,n);
+dice3<-dice(faces,n);
+
+data.frame(Dice1 = dice1,
+           Dice2 = dice2,
+           Dice3 = dice3);
+}
+
+```
+
+
+
+```{r}
+library(dplyr)
+experiment(6,400) %>% mutate(Sum=Dice1+Dice2+Dice3) -> df02;
+df02;
+```
+
+
+```{r}
+df02%>%group_by(Sum)%>%summarise(N=n())
+```
+
+```{r}
+experiment(6,10000) %>% mutate(Sum=Dice1+Dice2+Dice3) -> df03;
+df03%>%group_by(Sum)%>%summarise(N=n()) %>% mutate(P=N/1E6);
+```
+
+
+```{r}
+library(ggplot2);
+experiment(6,10000000) %>% mutate(Sum=Dice1+Dice2+Dice3) -> df04;
+df04%>%group_by(Sum)%>%summarise(N=n()) %>% mutate(P=N/1E6)%>%ggplot(aes(x=as.factor(Sum), y=P))+geom_point();
+```
+
+```{r}
+experiment(6,1000000) %>% mutate(Sum=Dice1+Dice2+Dice3) %>%ggplot(aes(x=as.factor(Sum),))+geom_bar(aes(y=(..count..)/sum(..count..)),width=0.3)+xlab("Valeur de la somme")+ylab("Fréquence")+ylim(0,NA)+theme_bw();
+```
+
+
+
+
+On va maintenant se concentrer sur les intervalles de confiance.
+Soit P9 la probabilité d'obtenir une somme de 9 lors de lancés de trois dés.
+
+
+Tableau de Sum=9
+```{r}
+n=1000
+experiment(6,n) %>% mutate(Sum=Dice1+Dice2+Dice3)%>%group_by(Sum)%>%summarise(N=n())%>%filter(Sum==9)%>%mutate(Freq=N/n)->tab9
+tab9%>%mutate(sigma=sqrt(Freq*(1-Freq)))
+```
+Tableau de Sum=10
+```{r}
+n=1000
+experiment(6,n) %>% mutate(Sum=Dice1+Dice2+Dice3)%>%group_by(Sum)%>%summarise(N=n())%>%filter(Sum==10)%>%mutate(Freq=N/n)->tab10
+tab10%>%mutate(sigma=sqrt(Freq*(1-Freq)))
+
+```
+
+```{r}
+phi95=qnorm(0.975)
+tab9%>%mutate(sigma=sqrt(Freq*(1-Freq)))%>%mutate(Binf=Freq-phi95*sigma/sqrt(n))%>%mutate(Bsup=Freq+phi95*sigma/sqrt(n))->tab2.9
+tab2.9
+```
+
+```{r}
+phi95=qnorm(0.975)
+tab10%>%mutate(sigma=sqrt(Freq*(1-Freq)))%>%mutate(Binf=Freq-phi95*sigma/sqrt(n))%>%mutate(Bsup=Freq+phi95*sigma/sqrt(n))->tab2.10
+tab2.10
+```
+
+```{r}
+experiment(6,n) %>% mutate(Sum=Dice1+Dice2+Dice3)%>%group_by(Sum)%>%summarise(N=n()) %>% mutate(P=N/1E6)%>%ggplot(aes(x=as.factor(Sum), y=P))+geom_point()+geom_errorbarh(xmin=tab2.9%>%Binf, xmax=tab2.9%>%Bsup)
+
+```
+
+
