@@ -1,0 +1,307 @@
+---
+title: "Médailles Jeux Olympiques d'hiver de 1924 à 2010"
+author: "Kathleen GALVIN & Marie BERGERET"
+date: "30 mars 2017"
+output:
+  pdf_document: 
+    number_sections: yes
+---
+
+Dans le cadre du cours de Modèles Statistiques, nous allons analyser un jeu de données, selon les méthodes étudiées en TD. Nous avons donc cherché des données sur un sujet qui nous intéressait. Grâce au site www.data.gouv.fr, nous avons trouvé une base de données contenant des informations sur les nations médaillées au Jeux Olympiques (JO) d'hiver entre les années 1924 et 2010.
+
+Dans un premier temps il a été nécessaire d'installer plusieurs packages :
+```{r}
+library(readr)
+library(dplyr)
+library(ggplot2)
+```
+
+
+# Présention des données
+Les données sources se situent dans le fichier 'winter_olympics_medals.csv', nous allons donc les importer. 
+
+## Importation
+Ci-dessous se trouve un extrait des données, à savoir les 7 premières lignes du fichier (Intitulé des colonnes et lignes de données).
+```{r}
+donnees<- read_csv(file = "winter_olympics_medals.csv")
+head(donnees)
+```
+Cette base de données est contituée de 2 variables quantitatives ('int') et de 5 variables qualitatives ('chr' et 'lgt') :
+  - id      : Identifiant (il est le même pour un même sport et une même année, nous ne possédons pas le nom des différentes épreuves)  
+  - year    : Année des JO  
+  - sport   : Nom du sport (et pas celui de l'épreuve)  
+  - medal   : Couleur de la médaille obtenue - gold, silver, bronze -  
+  - code    : Code de la nation  
+  - country : Nom de la nation  
+  - host    : Booléen qui indique si le pays ayant gagné la médaille était le pays d'acceuil ou non - TRUE, FALSE -
+
+Une ligne correspond à la victoire d'une nation dans un sport lors d'une année de jeux.
+
+## Dates
+Nous possédons les données des Jeux Olympiques d'hivers qui ont eu lieux entre les deux années suivantes :
+```{r}
+min(donnees$year)
+max(donnees$year)
+```
+Les JO d'hiver ayant lieu tous les quatres ans, il n'est pas nécessaire d'afficher toutes les années.
+
+## Sports
+Voici la liste des différents sports représentés de 1924 à 2010 :
+```{r}
+donnees%>%select(sport)%>%unique()
+```
+Il y a donc 15 sport différents aux JO d'hiver (du moins jusqu'en 2010).
+
+## Pays
+Lors de tous ces jeux, de nombreux pays ont participé. 
+
+### Participants
+Ces données se situent dans un autre fichier csv que nous allons importer : 'pays.csv'. Ci-dessous un extrait de ces données (Code et nom de nation).
+```{r}
+dpays<- read_csv(file = "pays.csv")
+head(dpays)
+```
+Nous allons maintenant compter le nombre de nations ayant participé aus JO.
+```{r}
+dpays%>%select(code)%>%unique()%>%summarise(N=n())
+```
+Ainsi, 228 pays ont participé à au moins un sport d'un JO entre ces deux dates.
+
+### Gagnants
+Nous allons désormais nous concentrer sur les pays ayant célébré au moins une victoire, c'est à dire ayant gagné une médaille.
+```{r}
+donnees%>%select(country)%>%unique()%>%summarise(N=n())
+```
+```{r}
+donnees%>%select(code)%>%unique()%>%summarise(N=n())
+```
+
+Ainsi, 42 nations ont gagné des médailles entre 1924 et 2010.
+Nous avons remarqué qu'en comptant par nom de pays ('country') plutôt que par le code ('code'), nous obtenions plus de résultats. Cela s'explique par le fait que certains pays ont changé de nom au cours du temps, comme l'Allemagne : le code est resté 'GER' alors que le nom est passé de 'Federal Republic of Germany (1950-1990)', 'German Democratic Republic (1955-1990)' et 'UnitedTeamofGermany(1956-1960)' à 'Germany'. Il nous ait paru plus cohérent de travailler avec le code des pays. Vous trouverez en annexe un tableau de correspondance entre les codes et les nom des nations.
+
+
+Maintenant que nous avons présenté les données, nous allons les analyser selon une certaine ligne de reflexion.
+Dans un premier temps, nous allons essayer de trouver les pays qui ont gagné le plus (et réciproquement le moins) de médailles sur l'ensemble de ces jeux puis par sport. Ensuite, nous allons regarder si ce sont toujours les mêmes pays qui restent "au sommet" ou si, au cours des années, de nouveaux pays "compétitifs" ont émergé. Enfin, dans une dernière partie qui résulte surtout de notre curiosité, nous étudierons le cas de la France.
+
+# Quel pays gagne le plus/ le moins ?
+
+Nous allons maintenant regarder la répartition du nombre de médailles gagnées par pays sur l'ensembles de JO.
+
+## Peu importe la couleur de la médaille
+On va donc compter le nombre de médailles par pays (nous raisonnons toujours sur le code) sur les 86 ans de données que nous possédons.
+```{r}
+donnees%>%group_by(code)%>%summarise(N=n())
+```
+
+Nous allons maintenant transformer ces données en graphique afin de mieux les visualiser.
+```{r}
+donnees%>%group_by(code)%>%summarise(N=n())%>%arrange(-N)%>%ggplot(aes(x=code, y=N)) + geom_point(width=0.3)+xlab("Pays")+ylim(0,NA)+ylab("Nombre de médailles") + theme(axis.text.x = element_text(angle = 60, vjust = 1, hjust=1))
+```
+Le nombre de pays étant grand il n'est pas forcément aisé de lire ce graphique mais on voit quand même très bien les nations qui ont le plus gagné: Autriche, Allemagne, Norvège... De plus il est égalemnent possible de voir en un coup d'oeil les pays qui ont au contraire, gagné le moins de médailles : Roumanie, Danemark...
+
+Pour une meilleur lisibilité, nous allons maintenant extraire les 10 pays qui ont gagné le plus de médailles sur ces années
+ 
+```{r}
+MedailleGeneral<-donnees%>%group_by(code)%>%summarise(N=n())%>%arrange(-N)%>%slice(1:10)
+MedailleGeneral%>%ggplot(aes(x=code, y=N)) + geom_point(width=0.3)+xlab("Pays")+ylim(0,NA)+ylab("Nombre de médailles")+theme_bw()
+```
+Nous pouvons donc voir les 10 "meilleurs" pays, enfin, plus rigoureusement les pays qui ont gagné le plus de médailles (toutes couleurs confondues) lors de l'ensemble des JO. Comme nous le pensions les pays tels que l'Allemagne, les pays scandinaves ou encore les Etats Unis y figurent. Cependant la France n'entre pas dans le top 10, mais nous verrons son cas dans la dernière partie du rapport.
+
+Nous n'avons pas au premier coup d'oeil un classement par ordre croissant ou décroissant, nous allons donc essayer d'ordonner le graphique.
+```{r}
+donnees%>%group_by(code)%>%summarise(N=n())%>%arrange(-N)%>%slice(1:10)%>%mutate(ordre=1:10)%>% ggplot(aes(x=ordre, y=N)) + geom_point(width=0.3)+xlab("Pays")+ylim(0,NA)+ylab("Nombre de médailles")+theme_bw()
+```
+Ainsi, nous visualisons beaucoup plus facilement le "classement" et le nombre de médailles de chaque nation : Allemagne, Norvège... Cependant nous n'avons pas réussi à afficher le code des nations plutôt que leur ordre et il faut donc se référer au tableau suivant, ce qui n'est pas très pratique.
+
+```{r}
+donnees%>%group_by(code)%>%summarise(N=n())%>%arrange(-N)%>%slice(1:10)%>% mutate(ordre=1:10)%>%select(code,ordre)
+```
+
+### Le moins ?
+Nous allons ensuite extraire les 10 pays qui ont gagné le moins de médailles sur ces 86 années.
+```{r}
+donnees%>%group_by(code)%>%summarise(N=n())%>%arrange(N)%>%slice(1:10)
+```
+On peut voir que tous ces pays ont gagné moins de 5 médailles au JO d'hiver.
+
+Maintenant que nous avons vu les pays qui gagnent le plus et le moins de médailles toutes couleurs confondues, nous allons regarder pour chaque couleur de médaille afin de voir si ce sont toujours les mêmes pays et dans le même ordre.
+
+## Selon la couleur de la médaille
+### Or
+Nous allons faire comme précédemment mais en ne sélectionnant que les médailles d'or.
+```{r}
+MedailleOr<-donnees%>%group_by(code)%>%filter(medal=='gold')%>%summarise(N=n())%>%arrange(-N)%>%slice(1:10)
+donnees%>%group_by(code)%>%filter(medal=='gold')%>%summarise(N=n())%>% ggplot(aes(x=code, y=N)) + geom_point(width=0.3)+xlab("Pays")+ylim(0,NA)+ylab("Nombre de médailles") + theme(axis.text.x = element_text(angle = 60, vjust = 1, hjust=1))
+```
+Comme il n'est pas très facile de confronter le plot des médailles toutes couleurs confondues et des médailles d'or, et afin de répondre à notre question, nous allons confronter les liste des 10 pays qui ont gagné le plus dans les deux cas.
+```{r}
+tout<-MedailleGeneral%>%mutate(ordre=1:10)%>%select(code,ordre)%>%arrange(code)
+```
+```{r}
+or<-MedailleOr%>%mutate(ordre=1:10)%>%select(code,ordre)%>%arrange(code)
+```
+
+```{r}
+tout$code
+tout$ordre
+or$ordre
+```
+Donc même si l'affichage n'est pas optimal, on peut déjà voir que c'est la même liste de pays qui gagnent le plus de médailles en général et les médailles d'or, seul l'ordre varie légèrement. En effet les trois premiers pays (Allemagne, Norvège et Finlande) restent classés dans le même ordre. Pour la plupart des nations nous observons une variation d'un rang sauf pour la Finlande qui est trois places derrière quand on regarde les médailles d'or.
+ 
+```{r}
+donnees%>%group_by(code)%>%filter(medal=='gold')%>%summarise(N=n())%>%arrange(-N)%>%slice(1:10)%>% ggplot(aes(x=code, y=N)) + geom_point(width=0.3)+xlab("Pays")+ylim(0,NA)+ylab("Nombre de médailles")+theme_bw()
+```
+L'allure de ce graphique est similaire au précédent concernant les médailles en général, les écarts entre les différents pays sont respectés, par exemple l'Allemagne et la Norvège se distinguent toujours autant.
+
+### Argent
+Nous allons rapidement regarder si c'est la même chosse pour les médailles d'argent
+
+```{r}
+MedailleArgent<-donnees%>%group_by(code)%>%filter(medal=='silver')%>%summarise(N=n()) %>%arrange(-N)%>%slice(1:10)%>%arrange(code)
+MedailleArgent
+```
+Ce sont toujours les 10 mêmes pays.
+```{r}
+argent<-MedailleOr%>%mutate(ordre=1:10)%>%select(code,ordre)%>%arrange(code)
+tout$code
+tout$ordre
+or$ordre
+argent$ordre
+```
+Encore une fois l'ordre du podium est conservé et comme pour les médailles d'or, il y a très peu de mouvement de rangs.
+
+### Bronze
+Et enfin pour les medailles de bronze :
+```{r}
+MedailleBronze<-donnees%>%group_by(code)%>%filter(medal=='bronze')%>%summarise(N=n()) %>%arrange(-N)%>%slice(1:10)
+MedailleBronze%>%mutate(ordre=1:10)
+```
+Cette fois nous ne pouvons pas faire la même méthode car un pays a été remplacé : la France a plus gagné de médailles que l'Italie ce qui l'a fait sortir du top 10. L'Autriche a également fait sa place au détriment des Etats Unis
+
+Ainsi, on peut dire que le top 10 des nations qui gagnent le plus de médailles en général, d'or, d'argent ou de bronze reste constant mis à part l'Italie et la France qui échangent la place numéro 10. Nous allons maintenant regarder pour chaque JO, quels ont été les pays qui ont le plus gagné.
+
+# Analyse par sport
+
+Nous voulosn sortir la liste des trois nations qui obtiennent le plus de médailles dans chaque sport.
+```{r}
+donnees%>%group_by(sport,code)%>%summarise(NombreMed=n())%>%arrange(-NombreMed)%>%slice(1:3)
+```
+Par exemple, pour le biathlon les trois meilleurs pays sont :
+```{r}
+donnees%>%group_by(sport,code)%>%summarise(NombreMed=n())%>%arrange(-NombreMed)%>%slice(1:3)%>%filter(sport=='biathlon')
+```
+Ou encore pour le patinage artistique :
+```{r}
+donnees%>%group_by(sport,code)%>%summarise(NombreMed=n())%>%arrange(-NombreMed)%>%slice(1:3)%>%filter(sport=='figureskating')
+```
+
+
+# Evolution dans le temps
+L'objectif de cette partie est de se concentrer sur l'évolution de l'obtention des médailles des pays.
+Pour commencer, nous avons choisi de ne conserver que les trois nations qui ont gagné le plus de médailles par année de JO.
+```{r}
+donnees%>%group_by(year,code)%>%summarise(NombreMed=n())%>%arrange(-NombreMed)%>%slice(1:3)
+```
+Ces données sont difficilement analysables et visualisables, nous les traiterons donc autrement. Nous avons donc décidé de construire un graphique qui affiche le nombre de médailles obtenues (toutes couleurs confondues) pour chaque nation et pour chaque JO.
+```{r}
+donnees%>%group_by(year,code)%>%summarise(NombreMed=n())%>%ggplot(aes(x=year, y=NombreMed, color=code)) + geom_point()
+```
+
+Ce graphique étant illisible, nous allons essayer de relier chaque année de chaque nation entre eux. Cependant il faut faire attention car cela fausse légèrement les donnée car ce ne sont pas des données continues (JO seulement tous les 4 ans). Toutefois, on peut bien voir que les JO de 1940 et 1944 n'ont pas eu lieu à cause de la 2ème guerre mondiale.
+```{r}
+donnees%>%group_by(year,code)%>%summarise(NombreMed=n())%>%ggplot(aes(x=year, y=NombreMed, color=code)) + geom_point()+geom_line()
+```
+
+Il est difficile de voir exactement quelle couleur correspond à quelle nation mais il reste possible de suivre l'évolution du nombre de médailles d'un pays bien précis (exemple : Norvège en bleu que l'on peut suivre de 1924 à 2010).
+Nous pouvons également observer que depuis les années 1960-1970, plusieurs nations obtiennent beaucoup de médailles : par exemple l'Allemagne a gagné trois fois plus.
+
+Pour plus de lisibilité, nous allons afficher seulement les pays qui ont obtenu un nombre total de médailles sur l'en0semble de tous les jeux supérieurs à un certain nombre. Nous commençons avec 43 pour faire rentrer la Chine et la Corée du Sud.
+
+```{r}
+minMed<-donnees%>%group_by(code)%>%summarise(NombreMed=n())%>%filter(NombreMed>43)
+donnees%>%group_by(year,code)%>%summarise(NombreMed=n())%>%filter(code %in% minMed$code)%>%ggplot(aes(x=year, y=NombreMed, color=code)) + geom_point()+geom_line()
+```
+
+Il est déjà beaucoup plus aisé de distinguer les pays. On peut ainsi en un rapide coup d'oeil voir la classement des "meilleurs" nations pour chaque JO. Par exemple, en 2010 le classement est : Etats Unis, Allemagne, Canada, Norvège, Autriche, Russie, Corée du Sud, Chine-France-Suède...
+On remarque aussi que de nouveaux pays emergent tels que le Canada, la Chine ou la Corée du Sud : ils ont réciproquement gagné seulement une quarentaire de médailles en tout mais 14 et 13 aux derniers JO. De plus, il faut rester vigilant car des pays n'existent plus comme l'URSS, ce que l'on peut facilement distinguer(rose).
+
+Afin d'être certain de ne pas oublier de nouveaux pays émergeants, nous allons sortir le classement des 20 premieres nations des JO de 2006 et 2010.
+```{r}
+donnees%>%filter(year==2006)%>%group_by(code)%>%summarise(NombreMed=n())%>%arrange(-NombreMed)%>%slice(1:20)
+```
+```{r}
+donnees%>%filter(year==2010)%>%group_by(code)%>%summarise(NombreMed=n())%>%arrange(-NombreMed)%>%slice(1:20)
+```
+Il n'y a pas d'autres pays qui gagnent plus les deux derniers JO pour lesquels nous possédons des données sauf la République Tchèque (15ème en 2010). Cette dernière, résultante de l'ancienne Tchécoslovaquie, nous allons rapidement regarder le classement de cet ancien pays lors ce ses derniers JO : son classement était du même ordre.
+```{r}
+donnees%>%filter(year==1992)%>%group_by(code)%>%summarise(NombreMed=n())%>%arrange(-NombreMed)%>%mutate(ordre=1:20) %>%filter(code=='TCH')
+```
+
+Voici l'évolution du nombre de médailles pour les pays ayant obtenu plus de 150 médailles sur les 86 années.
+```{r}
+minMed<-donnees%>%group_by(code)%>%summarise(NombreMed=n())%>%filter(NombreMed>150)
+donnees%>%group_by(year,code)%>%summarise(NombreMed=n())%>%filter(code %in% minMed$code)%>%ggplot(aes(x=year, y=NombreMed, color=code)) + geom_point()+geom_line()
+```
+
+On note que lors des derniers JO (2010), les Etats Unis ont dépassé l'Allemagne, première depuis les années 1970. Globalement, ces pays gagnent plus de médailles de nos jours qu'avant les année 1970.
+
+Grâces aux graphiques nous avons pu voir que les pays gagnants le plus de médailles à chaque JO sont globalement les mêmes (Allemagne -détrônée en 2010-, Norvège..). Cependant nous commençons à voir de nouvelles nations qui atteignent le sommet à leur rythme (Chine, Corée du Sud, Canada...). Parmis ces dernier, se trouvent les Etats Unis qui se sont grandement améliorées depuis les JO des années 1990 et qui prennent finalement la tête du classement.
+
+# Position de la France
+Cette partie est une partie légèrement à part qui va traiter le cas de la France. Etant curieuses de savoir à quel niveau se situe la France, nous avons décidé d'y consacrer quelques lignes.
+
+Nous savons déjà que sur l'ensemble des jeux la France ne fait pas partie des 10 nations à avoir gagné le plus de médailles sauf si on ne regarde que les médailles de bronze où elle se classe à la 10ème place.
+```{r}
+donnees%>%group_by(code)%>%summarise(NombreMed=n())%>%arrange(-NombreMed)%>%mutate(ordre=1:42) %>%filter(code=='FRA')
+```
+Dans le classement général la France est 11ème sur 42 avec un total de 97 médailles (or, argent et bronze) en 86 ans.
+
+Voici le classement de la France pour chaque JO et le nombre de médailles obtenues:
+```{r}
+donnees%>%group_by(year,code)%>%summarise(NombreMed=n())%>%mutate(ordre=1:length(NombreMed))%>%filter(code=='FRA')
+```
+La France se maintenait vers la 4ème ou 5ème place jusqu'en 1992 où elle est descendue jusqu'a la 7ème place et est à la limte du top 10 à partir de 1998.
+
+On va maintenant regarder les sports dans lesquels la France est placée numéro un en terme de nombre de médaille durant un JO.
+```{r}
+donnees%>%group_by(year,sport,code)%>%summarise(NombreMed=n())%>%arrange(-NombreMed)%>%slice(1) %>%filter(code=='FRA')
+```
+Ainsi, quatres sports différents ressortent et comme nous nous y attendions, la France gagne beaucoup au biathlon en 2010.
+
+Voici la liste des sports (avec les années de JO associées) pour lesquels la France fait partie du top 3 des nations qui ont gagné le plus de médailles en général.
+```{r}
+donnees%>%group_by(year,sport,code)%>%summarise(NombreMed=n())%>%arrange(-NombreMed)%>%slice(1:3) %>%filter(code=='FRA')%>%slice(1:10)
+```
+```{r}
+donnees%>%group_by(year,sport,code)%>%summarise(NombreMed=n())%>%arrange(-NombreMed)%>%slice(1:3) %>%filter(code=='FRA')%>%arrange(-year)
+```
+On compte donc 22 sports et années pour lesquelles la France fait partie des trois "meilleures" nations mais nous n'affichons que les extrèmes c'est à dire les informations provenant des plus anciennes données et les plus récentes.
+
+Nous pouvons donc en conclure que la France est bien plassé dans le classement de l'ensemble des pays et souvent dans certains sports (par exemple en biathlon, saut alpin 'alpineskiing', patinage artistique 'figureskating', snowboard...). Cependant nous regrettons de ne pas posséder les données des derniers JO, à savoir ceux de Sotchi en 2014.
+
+# Conclusion 
+Grâce à ces données nous avons pu voir que les pays qui gagnent le plus de médailles évoluent peu entre les années 1924 et 2010 : les 10 premiers pays restent globalement constants (à quelques rangs près), par exemple l'Allemagne et la Norvège. Cependant on peut noter l'apparition de nouveaux pays qui ont récemment grandement augmenté leur nombre de médailles (Etats Unis, Canada, Chine...). Pour ce qui est de la France, on peut dire qu'elle est globalement assez bien classée, même si elle s'est faite dépassée par plusieurs pays depuis les années 1990, ne se situant plus forcément dans le top 10 des nations qui gagnent le plus de médailles.
+
+Ce projet nous a permis d'étudier des données qui nous intéressait mais égelement de mieux prendre en main Rstdio et différents packages tels que knitr, dplyr, etc.
+
+# Annexe : Correspondance code et nom de nations
+```{r}
+donnees%>%select(code,country)%>%unique()%>%arrange(code)%>%slice(1:10)
+```
+```{r}
+donnees%>%select(code,country)%>%unique()%>%arrange(code)%>%slice(11:20)
+```
+```{r}
+donnees%>%select(code,country)%>%unique()%>%arrange(code)%>%slice(21:30)
+```
+```{r}
+donnees%>%select(code,country)%>%unique()%>%arrange(code)%>%slice(31:40)
+```
+```{r}
+donnees%>%select(code,country)%>%unique()%>%arrange(code)%>%slice(41:50)
+```
+
+
+
+
+

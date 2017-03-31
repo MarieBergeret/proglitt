@@ -1,0 +1,164 @@
+---
+title: "Medailles Jeux Olympiques d'hiver de 1924 à 2010"
+author: "Kathleen GALVIN & Marie BERGERET"
+date: "30 mars 2017"
+output: pdf_document
+number_sections: yes
+---
+
+```{r}
+library(readr)
+library(dplyr)
+library(ggplot2)
+```
+
+# Présentation des données
+## Importation
+```{r}
+donnees<- read_csv(file = "winter_olympics_medals.csv")
+head(donnees)
+```
+
+## Dates
+Nous possédons les données des Jeux Olympiques d'hivers qui ont eu lieux entre les deux années suivantes.
+```{r}
+donnees%>%summarise(AnneeMin=min(year))
+donnees%>%summarise(AnneeMax=max(year))
+```
+Les JO d'hiver ayant lieu tous les quatres ans, il n'est pas nécessaire d'afficher toutes les années.
+
+## Sports
+Voici la liste des différents sports représentés de 1924 à 2010 :
+```{r}
+donnees%>%select(sport)%>%unique()
+```
+
+
+## Pays
+Lors de tous ces jeux, de nombreux pays ont participé. Ces données se situent dans un autre fichier csv que nous allons importer.
+
+
+### Participants
+```{r}
+dpays<- read_csv(file = "pays.csv")
+head(dpays)
+```
+
+```{r}
+dpays%>%select(code)%>%unique()%>%summarise(N=n())
+```
+Ainsi, 228 pays ont participé à au moins un JO entre ces deux dates.
+
+### Gagnants
+```{r}
+donnees%>%select(code)%>%unique()%>%summarise(N=n())
+```
+
+Ainsi, 42 pays ont gagné des médailles entre 1924 et 2010.
+Nous avons remarqué qu'en comptant par nom de pays ('country') plutôt que par le code ('code'), nous obtenions plus de résultats (46). Cela s'explique par le fait que certains pays ont changé de nom comme l'Allemagne : le code est resté 'GER' alors que le nom est passé de 'Federal Republic of Germany (1950-1990)' et 'German Democratic Republic (1955-1990)' à 'Germany'. Il nous ait paru plus cohérent de travailler avec le code des pays.
+
+
+HYPOTHESE !!!!!!!!!!!!!!!!
+
+
+# Quel pays gagne le plus/ le moins ?
+Nous allons maintenant regarder la répartition du nombre de médailles gagnées par pays.
+## Peu importe la couleur de la médaille
+On va donc compter le nombre de médaille par pays.
+```{r}
+c<-donnees%>%group_by(code)%>%summarise(n=n())%>%select(code)
+```
+### Le plus ?
+Nous allons extraire les 10 pays qui ont gagné le plus de médailles sur ces 86 années.
+
+```{r}
+donnees%>%group_by(code)%>%summarise(N=n())%>%arrange(-N)%>%slice(1:10)%>%ggplot(aes(x=code, y=N))+geom_point(width=0.3)+xlab("Pays")+ylim(0,NA)+ylab("NOmbre de médailles")+theme_bw()
+
+
+```
+
+### Le moins ?
+Nous allons extraire les 10 pays qui ont gagné le moins de médailles sur ces 86 années.
+
+```{r}
+donnees%>%group_by(code)%>%summarise(N=n())%>%arrange(N)%>%slice(1:20)
+```
+
+## Selon la couleur de la médaille
+### Or
+```{r}
+donnees%>%group_by(code)%>%filter(medal=='gold')%>%summarise(N=n())%>%arran
+```{r}
+donnees%>%group_by(year,code)%>%summarise(N=n())%>%ggplot(aes(x=4, y=N, color=code))+geom_point()+geom_line()
+```ge(-N)%>%slice(1:10)%>%ggplot(aes(x=code, y=N))+geom_point(width=0.3)+xlab("Pays")+ylim(0,NA)+ylab("NOmbre de médailles")+theme_bw()
+```
+### Argent
+
+A completer
+
+### Bronze
+
+A completer
+
+
+# Analyse par Jeux Olympiques 
+
+Peu importe la couleur de la médaille
+```{r}
+donnees%>%group_by(year,code)%>%summarise(N=n())%>%arrange(-N)%>%slice(1:3)
+```
+
+
+
+# Analyse par sport
+
+Peu importe la couleur de la médaille
+```{r}
+donnees%>%group_by(sport,code)%>%summarise(N=n())%>%arrange(-N)%>%slice(1:3)
+```
+
+# Evolution dans le remps
+```{r}
+donnees%>%group_by(year,code)%>%summarise(N=n())%>%ggplot(aes(x=year, y=N, color=code))+geom_point()
+```
+
+```{r}
+donnees%>%group_by(year,code)%>%summarise(N=n())%>%ggplot(aes(x=year, y=N, color=code))+geom_point()+geom_line()
+```
+ATTENTION
+```{r}
+donnees%>%group_by(year,code)%>%summarise(N=n())%>%filter(code==c('GER','NOR','USA','AUT','URS','FIN','CAN','SWE','SUI','ITA'))%>%ggplot(aes(x=year, y=N, color=code))+geom_point()+geom_line()
+```
+
+
+```{r}
+(donnees$year - min( donnees$year))/4
+
+donnees %>% mutate(year2=(year-min(year))/4)
+
+donnees%>%group_by(year,code)%>%summarise(N=n())%>%mutate(year2=(year-min(year))/4)
+```
+
+
+```{r}
+donnees%>%group_by(year,code)%>%summarise(N=n())%>%mutate(year2=(year-min(year))/4)%>%ggplot(aes(x=year2, y=N, color=code))+geom_point()+geom_line()
+```
+
+
+# Position de la France
+```{r}
+donnees%>%group_by(year,sport,code)%>%summarise(N=n())%>%arrange(-N)%>%slice(1)%>%filter(code=='FRA')
+```
+
+```{r}
+donnees%>%group_by(year,sport,code)%>%summarise(N=n())%>%arrange(-N)%>%slice(1:3)%>%filter(code=='FRA')
+```
+
+
+
+
+
+
+
+
+
